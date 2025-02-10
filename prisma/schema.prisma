@@ -12,82 +12,112 @@ model User {
   username     String        @unique
   email        String        @unique
   password     String
-  fullname     String
-  gender       String?
-  province     String?
-  district     String?
-  itinerary    Itinerary? // ✅ Only referencing Itinerary, no `@relation`
-  reviews      Review[]
+  fullName     String
+  gender       String
+  provinceId   String?
+  districtId   String?
+  userType     String
+  isVerified   Boolean       @default(false)
+  isPro        Boolean       @default(false)
+  image        String?
+  itineraries  Itinerary[]
+  reviews      Review[]      @relation("UserReviews")
   reservations Reservation[]
+  Province     Province?     @relation("UserProvince", fields: [provinceId], references: [provinceId])
+  District     District?     @relation("UserDistrict", fields: [districtId], references: [districtId])
 }
 
-model Location {
-  id          String   @id @default(uuid())
+model Province {
+  provinceId  String      @id @default(uuid())
   title       String
-  description String?
-  type        String
-  price       Float?
+  description String
+  pricePerDay Float
   images      String[]
   coordinates Json
+  districts   District[]
+  places      Place[]
+  reviews     Review[]    @relation("ProvinceReviews")
+  users       User[]      @relation("UserProvince")
+  itineraries Itinerary[] @relation("ItineraryProvince")
+}
 
-  bestPlaces Place[] // This is a one-to-many relation
-  reviews    Review[]
+model District {
+  districtId  String      @id @default(uuid())
+  title       String
+  description String
+  provinceId  String
+  pricePerDay Float
+  images      String[]
+  coordinates Json
+  bestPlaces  Place[]
+  Province    Province    @relation(fields: [provinceId], references: [provinceId])
+  reviews     Review[]    @relation("DistrictReviews")
+  users       User[]      @relation("UserDistrict")
+  itineraries Itinerary[] @relation("ItineraryDistrict")
 }
 
 model Place {
-  placeId     String   @id @default(uuid())
-  title       String
-  description String?
-  province    String
-  district    String
-  type        String
-  price       Float?
-  images      String[]
-  coordinates Json
-
-  locationId String?
-  location   Location? @relation(fields: [locationId], references: [id]) // Fixed relation
-
-  reviews      Review[]
-  reservations Reservation[]
+  placeId        String        @id @default(uuid())
+  title          String
+  description    String
+  provinceId     String
+  districtId     String
+  category       String
+  pricePerPerson Float
+  images         String[]
+  coordinates    Json
+  Province       Province      @relation(fields: [provinceId], references: [provinceId])
+  District       District      @relation(fields: [districtId], references: [districtId])
+  reservations   Reservation[]
+  reviews        Review[]      @relation("PlaceReviews")
 }
 
 model Review {
-  reviewId   String  @id @default(uuid())
-  authorId   String
-  locationId String?
-  placeId    String?
-
-  author   User      @relation(fields: [authorId], references: [userId])
-  location Location? @relation(fields: [locationId], references: [id])
-  place    Place?    @relation(fields: [placeId], references: [placeId])
-
+  reviewId    String    @id @default(uuid())
+  authorId    String
+  type        String
+  typeId      String
   stars       Int
-  date        DateTime @default(now())
-  title       String?
-  description String?
+  date        DateTime
+  title       String
+  description String
   images      String[]
+  User        User      @relation("UserReviews", fields: [authorId], references: [userId])
+  Province    Province? @relation("ProvinceReviews", fields: [typeId], references: [provinceId], map: "Review_Province_fkey")
+  District    District? @relation("DistrictReviews", fields: [typeId], references: [districtId], map: "Review_District_fkey")
+  Place       Place?    @relation("PlaceReviews", fields: [typeId], references: [placeId], map: "Review_Place_fkey")
 }
 
 model Itinerary {
-  itineraryId String @id @default(uuid())
-  province    String
-  district    String
-  places      Json // List of places with order, date-time, duration
+  itineraryId String   @id @default(uuid())
+  userId      String
+  provinceId  String
+  districtId  String
   totalPrice  Float
-  userId      String @unique
-  user        User   @relation(fields: [userId], references: [userId]) // ✅ Only one side defines @relation
+  places      Json
+  User        User     @relation(fields: [userId], references: [userId])
+  Province    Province @relation("ItineraryProvince", fields: [provinceId], references: [provinceId])
+  District    District @relation("ItineraryDistrict", fields: [districtId], references: [districtId])
 }
 
 model Reservation {
-  reservationId        String  @id @default(uuid())
-  placeId              String
-  clientId             String
-  intervale            String
-  totalPrice           Float
-  paiementInformations Json
-  isValidated          Boolean @default(false)
+  reservationId      String             @id @default(uuid())
+  placeId            String
+  clientId           String
+  timeInterval       Json
+  totalPrice         Float
+  isValidated        Boolean            @default(false)
+  paymentId          String
+  Place              Place              @relation(fields: [placeId], references: [placeId])
+  User               User               @relation(fields: [clientId], references: [userId])
+  PaymentInformation PaymentInformation @relation(fields: [paymentId], references: [paymentId])
+}
 
-  place  Place @relation(fields: [placeId], references: [placeId])
-  client User  @relation(fields: [clientId], references: [userId])
+model PaymentInformation {
+  paymentId      String        @id @default(uuid())
+  cardNumber     String
+  cardHolderName String
+  expirationDate String
+  cvv            String
+  reservations   Reservation[]
 }
