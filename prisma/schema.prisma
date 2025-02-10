@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  userId       String        @id @default(uuid())
+  username     String        @unique
+  email        String        @unique
+  password     String
+  fullname     String
+  gender       String?
+  province     String?
+  district     String?
+  itinerary    Itinerary? // ✅ Only referencing Itinerary, no `@relation`
+  reviews      Review[]
+  reservations Reservation[]
+}
+
+model Location {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  type        String
+  price       Float?
+  images      String[]
+  coordinates Json
+
+  bestPlaces Place[] // This is a one-to-many relation
+  reviews    Review[]
+}
+
+model Place {
+  placeId     String   @id @default(uuid())
+  title       String
+  description String?
+  province    String
+  district    String
+  type        String
+  price       Float?
+  images      String[]
+  coordinates Json
+
+  locationId String?
+  location   Location? @relation(fields: [locationId], references: [id]) // Fixed relation
+
+  reviews      Review[]
+  reservations Reservation[]
+}
+
+model Review {
+  reviewId   String  @id @default(uuid())
+  authorId   String
+  locationId String?
+  placeId    String?
+
+  author   User      @relation(fields: [authorId], references: [userId])
+  location Location? @relation(fields: [locationId], references: [id])
+  place    Place?    @relation(fields: [placeId], references: [placeId])
+
+  stars       Int
+  date        DateTime @default(now())
+  title       String?
+  description String?
+  images      String[]
+}
+
+model Itinerary {
+  itineraryId String @id @default(uuid())
+  province    String
+  district    String
+  places      Json // List of places with order, date-time, duration
+  totalPrice  Float
+  userId      String @unique
+  user        User   @relation(fields: [userId], references: [userId]) // ✅ Only one side defines @relation
+}
+
+model Reservation {
+  reservationId        String  @id @default(uuid())
+  placeId              String
+  clientId             String
+  intervale            String
+  totalPrice           Float
+  paiementInformations Json
+  isValidated          Boolean @default(false)
+
+  place  Place @relation(fields: [placeId], references: [placeId])
+  client User  @relation(fields: [clientId], references: [userId])
+}
