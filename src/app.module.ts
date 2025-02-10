@@ -15,9 +15,13 @@
 // export class AppModule {}
 import { Module } from '@nestjs/common';
 import { PrismaService } from './prisma/prisma.service';
+import { ProvinceModule } from './province/province.module';
+import { DistrictModule } from './district/district.module';
+import { PlaceModule } from './place/place.module';
 
 @Module({
   providers: [PrismaService],
-  exports: [PrismaService], // Export PrismaService to make it available in other modules
+  exports: [PrismaService],
+  imports: [ProvinceModule, DistrictModule, PlaceModule], // Export PrismaService to make it available in other modules
 })
 export class AppModule {}
