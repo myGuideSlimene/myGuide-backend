@@ -7,8 +7,11 @@ import { ReviewModule } from './review/review.module';
 import { ItineraryModule } from './itinerary/itinerary.module';
 import { ReservationModule } from './reservation/reservation.module';
 import { PaymentInformationModule } from './payment-information/payment-information.module';
+import { ChatbotModule } from './chatbot/chatbot.module';
 import { PrismaService } from './prisma/prisma.service';
 import { MistralService } from './mistral/mistral.service';
+import { ChatbotService } from './chatbot/chatbot.service';
+
 
 @Module({
   imports: [
@@ -20,8 +23,9 @@ import { MistralService } from './mistral/mistral.service';
     ItineraryModule,
     ReservationModule,
     PaymentInformationModule,
+    ChatbotModule,
   ],
-  providers: [PrismaService, MistralService], // Add PrismaService and MistralService here
+  providers: [PrismaService, MistralService, ChatbotService], // Add PrismaService and MistralService here
   exports: [PrismaService], // Export PrismaService to make it available in other modules
 })
 export class AppModule {}
